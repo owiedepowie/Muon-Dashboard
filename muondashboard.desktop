@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MuonDashboard
+Exec=/home/owim2/myapp/muondashboard --no-sandbox
+Icon=/home/owim2/myapp/icon.png
+Terminal=false
+Categories=Utility;
+StartupNotify=true
