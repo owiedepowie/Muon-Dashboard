@@ -7,9 +7,11 @@ export function Layout() {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   useEffect(() => {
-    const unsubscribe = window.electron.onFullscreenChange(setIsFullscreen);
-    window.electron.isFullscreen().then(setIsFullscreen);
-    return () => unsubscribe?.();
+    if (window.electron && window.electron.onFullscreenChange) {
+      const unsubscribe = window.electron.onFullscreenChange(setIsFullscreen);
+      window.electron.isFullscreen?.().then(setIsFullscreen);
+      return () => unsubscribe?.();
+    }
   }, []);
 
   if (isFullscreen === null) return <div className="h-screen w-screen bg-background" />;

@@ -1,5 +1,7 @@
 "use client"
 
+import { eventsPerSecond } from "@/math/eventsPerSecond"
+import { useParsedData } from "@/Data/parseData"
 import { TrendingUp } from "lucide-react"
 import { 
   PolarAngleAxis, 
@@ -42,7 +44,7 @@ import type { DateRange } from "node_modules/react-day-picker/dist/esm/types/sha
 import React from "react"
 
 const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
+  { month: "Bananuary", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
   { month: "March", desktop: 237, mobile: 120 },
   { month: "April", desktop: 73, mobile: 190 },
@@ -118,6 +120,7 @@ function renderChart(
   type?: "natural" | "linear" | "step",
   label?: "none" | "label" | "dots",
   legend?: boolean,
+  graphData?: { time: number; events: number }[],
 ) {
 
   switch (chart) {
@@ -157,20 +160,20 @@ function renderChart(
       return (
         <ChartContainer config={chartConfig}>
           <LineChart
-            data={chartData}
+            data={graphData}
             margin={{ top: 20, left: 12, right: 12 }}
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="time"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(v) => v.slice(0, 3)}
+              tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
             <Line
-              dataKey="desktop"
+              dataKey="events"
               type={type}
               stroke="var(--color-desktop)"
               strokeWidth={2}
@@ -186,10 +189,9 @@ function renderChart(
           >
             {label === "label" && (
               <LabelList
+
                 position="top"
                 offset={12}
-                className="fill-foreground"
-                fontSize={12}
               />
             )}
             </Line>
@@ -200,17 +202,17 @@ function renderChart(
     case "bar":
       return (
         <ChartContainer config={chartConfig}>
-          <BarChart data={chartData}>
+          <BarChart data={graphData}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="time"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(v) => v.slice(0, 3)}
+              tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
+            <Bar dataKey="events" fill="var(--color-desktop)" radius={8} />
             {legend && (<ChartLegend content={<ChartLegendContent />} />)}
           </BarChart>
         </ChartContainer>
@@ -218,18 +220,18 @@ function renderChart(
     case "area":
       return (
         <ChartContainer config={chartConfig}>
-          <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
+          <AreaChart data={graphData} margin={{ left: 12, right: 12 }}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="time"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(v) => v.slice(0, 3)}
+              tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
             <Area
-              dataKey="mobile"
+              dataKey="events"
               type={type}
               fill="var(--color-mobile)"
               fillOpacity={0.4}
@@ -267,6 +269,15 @@ export function ExampleChart({
     from: new Date(2025, 5, 5),
     to: new Date(2025, 5, 20),
   })
+  
+  const { data, loading, error } = useParsedData({maxRows: 10000 });
+  const lastTimestamp = data.length ? data[data.length - 1].Timestamp : 0;
+  // Memoize graphData safely, even if data is undefined yet
+  const graphData = React.useMemo(() => {
+    if (!data.length) return [];
+    return eventsPerSecond(data, 10);
+  }, [lastTimestamp]);
+
   return (
     <Card className="w-60 h-60 gap-4 transition">
       <CardHeader>
@@ -281,11 +292,17 @@ export function ExampleChart({
         </CardAction>
       </CardHeader>
       <CardContent>
-        {renderChart(chart, type, label, legend)}
+        {loading ? (
+        <div>Loading…</div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        renderChart(chart, type, label, legend, graphData)
+      )}
       </CardContent>
       {trend && (<CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
-          {t("currenttrend")} <TrendingUp className="h-4 w-4" />
+          {t("currenttrend")} {<TrendingUp className="h-4 w-4" />}
         </div>
       </CardFooter>
     )}

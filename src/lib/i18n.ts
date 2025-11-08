@@ -47,15 +47,39 @@ i18n.use(initReactI18next).init({
         "widgets.block.description": "Select a block to add to your dashboard.",
 
         // Example charts and blocks
-        "chart.title.line": "Example Line Chart",
-        "chart.title.bar": "Example Bar Chart",
-        "chart.title.area": "Example Area Chart",
-        "chart.title.pie": "Example Pie Chart",
-        "chart.title.radar": "Example Radar Chart",
+        "chart": {
+          "title": {
+            "line": "Line Chart",
+            "bar": "Bar Chart",
+            "area": "Area Chart",
+            "pie": "Pie Chart",
+            "radar": "Radar Chart"
+          }
+        },
         "chart.date.examplerange":"January - June 2024",
         "currenttrend": "Current trend",
         "block.datadescription": "Data description",
-        
+
+        // Chart dialog items
+        "chart.title": "Chart Title",
+        "chart.label.none": "none",
+        "chart.label.label": "label",
+        "chart.label.dots": "dots",        
+        "chart.line.header": "Line type",
+        "chart.line.natural": "natural",
+        "chart.line.linear": "linear",
+        "chart.line.step": "step",
+        "chart.dataset.events": "events",
+        "chart.dataset.ADC": "ADC",
+        "chart.dataset.SiPM": "SiPM",
+        "chart.dataset.deadtime": "deadtime",
+        "chart.dataset.temperature": "temperature",
+        "chart.dataset.pressure": "pressure",
+        "chart.dataset.acceleration": "acceleration",
+        "chart.dataset.gyro": "gyro",
+        "chart.checkbox.legend": "Enable legend",
+        "chart.checkbox.trend": "Enable footer",
+        "chart.checkbox.calendar": "Enable calendar",
 
       },
     },
@@ -95,14 +119,41 @@ i18n.use(initReactI18next).init({
         "widgets.block.description": "Selecteer een blok om toe te voegen aan je dashboard.",
 
         // Example charts and blocks
-        "chart.title.line": "Voorbeeld Lijndiagram",
-        "chart.title.bar": "Voorbeeld Staafdiagram",
-        "chart.title.area": "Voorbeeld Oppervlaktediagram",
-        "chart.title.pie": "Voorbeeld Cirkeldiagram",
-        "chart.title.radar": "Voorbeeld Radardiagram",
-        "chart.date.examplerange":"Januari - Juni 2024",
+        "chart": {
+          "title": {
+            "line": "Lijndiagram",
+            "bar": "Staafdiagram",
+            "area": "Oppervlaktediagram",
+            "pie": "Cirkeldiagram",
+            "radar": "Radardiagram"
+          }
+        },
+        "chart.date.examplerange":"Januari - Juni 2024",        
         "currenttrend": "Huidige trend",
         "block.datadescription": "Data beschrijving",
+
+        // Chart dialog
+        "chart.header": "Voeg een {{chart}} widget toe",
+        "chart.description": "Configureer en voeg een {{chart}} widget toe aan je dashboard.",
+        "chart.title": "Diagram Titel",
+        "chart.label.none": "geen",
+        "chart.label.label": "label",
+        "chart.label.dots": "punten",
+        "chart.line.header": "Lijn type",
+        "chart.line.natural": "natuurlijk",
+        "chart.line.linear": "lineair",
+        "chart.line.step": "stap",
+        "chart.dataset.events": "evenementen",
+        "chart.dataset.ADC": "ADC",
+        "chart.dataset.SiPM": "SiPM",
+        "chart.dataset.deadtime": "deadtime",
+        "chart.dataset.temperature": "temperatuur",
+        "chart.dataset.pressure": "druk",
+        "chart.dataset.acceleration": "versnelling",
+        "chart.dataset.gyro": "gyro",
+        "chart.checkbox.legend": "Toon legenda",
+        "chart.checkbox.trend": "Toon footer",
+        "chart.checkbox.calendar": "Toon kalender",
       },
     },
   },

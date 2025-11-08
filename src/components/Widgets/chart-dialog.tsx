@@ -30,15 +30,16 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "../ui/button"
+import { useTranslation } from "react-i18next"
 
 interface ChartDialogProps {
   chart: "pie" | "radar" | "line" | "bar" | "area";
 }
 
 const CheckboxItems = [
-  { id: "legend", label: "Enable legend" },
-  { id: "trend", label: "Enable trend footer" },
-  { id: "calendar", label: "Enable calendar"}
+  { id: "legend", label: "chart.checkbox.legend" },
+  { id: "trend", label: "chart.checkbox.trend" },
+  { id: "calendar", label: "chart.checkbox.calendar" }
 ];
 
 type LineType = "natural" | "linear" | "step";
@@ -64,6 +65,7 @@ export function ChartDialog({ chart }: ChartDialogProps) {
     {
         id: "labelType",
         label: "Label Type",
+        names: ["chart.label.none", "chart.label.label", "chart.label.dots"],
         values: ["none", "label", "dots"],
         disabled: chart !== "line",
         value: labelType,
@@ -71,8 +73,9 @@ export function ChartDialog({ chart }: ChartDialogProps) {
     },
     {
         id: "lineType",
-        label: "Line Type",
+        label: "chart.line.header",
         values: ["natural", "linear", "step"],
+        names: ["chart.line.natural", "chart.line.linear", "chart.line.step"],
         disabled: chart !== "line" && chart !== "area",
         value: lineType,
         onChange: (val: LineType) => setLineType(val),
@@ -84,10 +87,8 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
     const handleCheckedChange = (value: string, checked: boolean) => {
     setSelectedOrder((prev) => {
         if (checked) {
-        // toevoegen aan het einde als checked
         return [...prev, value]
         } else {
-        // verwijderen als unchecked
         return prev.filter((v) => v !== value)
         }
     })
@@ -95,16 +96,19 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
     const DatasetItems = [
     {
         id: "data",
-        values: ["events", "ADC", "SiPM", "deadtime", "temperature", "pressure", "acceleration", "gyro" ]
+        values: ["events", "ADC", "SiPM", "deadtime", "temperature", "pressure", "acceleration", "gyro" ],
+        names: ["chart.dataset.events", "chart.dataset.ADC", "chart.dataset.SiPM", "chart.dataset.deadtime", "chart.dataset.temperature", "chart.dataset.pressure", "chart.dataset.acceleration", "chart.dataset.gyro" ]
     }
     ]
+
+    const { t } = useTranslation();
 
     return (
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Add {chart} chart widget</DialogTitle>
+                <DialogTitle>{t("chart.header", { chart: t(`chart.title.${chart}`) })}</DialogTitle>
                 <DialogDescription>
-                    Configure and add a {chart} chart widget to your dashboard.
+                    {t("chart.description", { chart: t(`chart.title.${chart}`) })}
                 </DialogDescription>
                 <div className="flex flex-row justify-between">
                     <div className="mt-4 flex-col space-x-2">
@@ -112,7 +116,7 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                             className="w-45 mb-2" 
                             value={chartTitle} 
                             onChange={(e) => setChartTitle(e.target.value)} 
-                            placeholder="Chart Title"
+                            placeholder={t(`chart.title.${chart}`)}
                             maxLength={30} 
                         />
                         {SelectConfigs.map((config) => (
@@ -129,10 +133,10 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                             </SelectTrigger>
                             <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>{config.label}</SelectLabel>
+                                <SelectLabel>{t(config.label)}</SelectLabel>
                                 {config.values.map((val) => (
                                 <SelectItem key={val} value={val}>
-                                    {val}
+                                    {t(config.names[config.values.indexOf(val)])}
                                 </SelectItem>
                                 ))}
                             </SelectGroup>
@@ -161,7 +165,7 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                                     disabled={!isChecked && maxSelected}
                                     className="flex justify-between items-center data-[state=checked]:bg-accent disabled:cursor-not-allowed"
                                 >
-                                    <span>{value}</span>
+                                    <span>{t(group.names[group.values.indexOf(value)])}</span>
                                     {isChecked && (
                                     <span className="ml-2 font-bold">{index + 1}</span>
                                     )}
@@ -180,7 +184,7 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                                     handleCheckboxChange(item.id, checked === true)
                                 }
                                 />
-                                <Label htmlFor={item.id}>{item.label}</Label>
+                                <Label htmlFor={item.id}>{t(item.label)}</Label>
                             </div>
                         ))}
                     </div>

@@ -30,11 +30,15 @@ const AppTitlebar = () => {
   }, []);
 
   useEffect(() => {
-  const unsubscribe = window.electron.onFullscreenChange((fullscreen) => {
-    setIsFullscreen(fullscreen);
+  if (window.electron && window.electron.onFullscreenChange) {
+    const unsubscribe = window.electron.onFullscreenChange((fullscreen) => {
+      setIsFullscreen(fullscreen);
   });
 
   return () => unsubscribe();
+} else {
+  setIsFullscreen(false);
+}
 }, []);
 
   if (isFullscreen) return null;
