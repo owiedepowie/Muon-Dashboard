@@ -82,10 +82,10 @@ export function ChartDialog({ chart }: ChartDialogProps) {
     },
     ]
 
-const [selectedOrder, setSelectedOrder] = useState<string[]>([])
+const [dataset, setDataset] = useState<string[]>([])
 
     const handleCheckedChange = (value: string, checked: boolean) => {
-    setSelectedOrder((prev) => {
+    setDataset((prev) => {
         if (checked) {
         return [...prev, value]
         } else {
@@ -96,8 +96,8 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
     const DatasetItems = [
     {
         id: "data",
-        values: ["events", "ADC", "SiPM", "deadtime", "temperature", "pressure", "acceleration", "gyro" ],
-        names: ["chart.dataset.events", "chart.dataset.ADC", "chart.dataset.SiPM", "chart.dataset.deadtime", "chart.dataset.temperature", "chart.dataset.pressure", "chart.dataset.acceleration", "chart.dataset.gyro" ]
+        values: ["rate", "adc", "sipm", "deadtime", "temp", "press", "accel", "gyro" ],
+        names: ["chart.dataset.rate", "chart.dataset.ADC", "chart.dataset.SiPM", "chart.dataset.deadtime", "chart.dataset.temperature", "chart.dataset.pressure", "chart.dataset.acceleration", "chart.dataset.gyro" ]
     }
     ]
 
@@ -151,9 +151,17 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                             <DropdownMenuLabel className="font-light text-muted-foreground">Data</DropdownMenuLabel>
                             {DatasetItems.map((group) =>
                             group.values.map((value) => {
-                                const index = selectedOrder.indexOf(value)
-                                const maxSelected = selectedOrder.length >= 3
+                                const index = dataset.indexOf(value)
+                                const maxSelected = dataset.length >= 3
                                 const isChecked = index !== -1
+
+                                const isRateSelected = 
+                                    dataset.includes("rate")
+
+                                const disabled = 
+                                    (value === "rate" && dataset.length > 0 && !isChecked) ||
+                                    (value !== "rate" && isRateSelected &&  !isChecked) ||
+                                    (!isChecked && maxSelected)
                                 return (
                                 <DropdownMenuCheckboxItem
                                     key={value}
@@ -162,7 +170,7 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                                         e.preventDefault()
                                         handleCheckedChange(value, index === -1)
                                     }}
-                                    disabled={!isChecked && maxSelected}
+                                    disabled={disabled}
                                     className="flex justify-between items-center data-[state=checked]:bg-accent disabled:cursor-not-allowed"
                                 >
                                     <span>{t(group.names[group.values.indexOf(value)])}</span>
@@ -196,6 +204,7 @@ const [selectedOrder, setSelectedOrder] = useState<string[]>([])
                         legend={checkboxes.legend}
                         trend={checkboxes.trend}
                         calendar={checkboxes.calendar}
+                        dataset={dataset}
                     />
                 </div>
             </DialogHeader>

@@ -1,7 +1,8 @@
 "use client"
 
-import { eventsPerSecond } from "@/math/eventsPerSecond"
-import { useParsedData } from "@/Data/parseData"
+import { calcRate } from "@/Data/calculateRate"
+import { getColumnsPerEvent } from "@/Data/dataPerEvent"
+import { useParsedData, type RawRow } from "@/hooks/parseData"
 import { TrendingUp } from "lucide-react"
 import { 
   PolarAngleAxis, 
@@ -53,15 +54,15 @@ const chartData = [
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Data-type-2",
-    color: "var(--chart-1)",
-  },
-  mobile: {
-    label: "Data-type-1",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig
+  rate: { label: "Rate", color: "var(--chart-1)" },
+  adc: { label: "ADC", color: "var(--chart-2)" },
+  sipm: { label: "SiPM", color: "var(--chart-3)" },
+  deadtime: { label: "Deadtime", color: "var(--chart-4)" },
+  temp: { label: "Temperature", color: "var(--chart-5)" },
+  press: { label: "Pressure", color: "var(--chart-6)" },
+  accel: { label: "Acceleration", color: "var(--chart-7)" },
+  gyro: { label: "Gyro",color: "var(--chart-8)" },
+} satisfies ChartConfig;
 
 const chartDataPie = [
   { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
@@ -105,6 +106,7 @@ interface ExampleChartProps {
   legend?: boolean;
   trend?: boolean;
   calendar?: boolean;
+  dataset?: string[];
 }
 
 const chartTitles: Record<ExampleChartProps["chart"], string> = {
@@ -120,7 +122,8 @@ function renderChart(
   type?: "natural" | "linear" | "step",
   label?: "none" | "label" | "dots",
   legend?: boolean,
-  graphData?: { time: number; events: number }[],
+  graphData?: { time: number; rate: number }[],
+  dataset?: string[]
 ) {
 
   switch (chart) {
@@ -157,6 +160,9 @@ function renderChart(
         </ChartContainer>
       )
     case "line":
+
+      const XAxisDatakey = dataset?.includes("rate") ? "time" : "time"
+
       return (
         <ChartContainer config={chartConfig}>
           <LineChart
@@ -165,37 +171,30 @@ function renderChart(
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="time"
+              dataKey={XAxisDatakey}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-            <Line
-              dataKey="events"
-              type={type}
-              stroke="var(--color-desktop)"
-              strokeWidth={2}
-              {...(label !== "none"
-              ? {
-                  dot: { fill: "var(--color-desktop)" },
-                  activeDot: { r: 6 },
-                }
-              : {
-                  dot: false,
-                  activeDot: false,
-              })}
-          >
-            {label === "label" && (
-              <LabelList
 
-                position="top"
-                offset={12}
-              />
+            {dataset?.slice(0, 3).map((key, index) => (
+              <Line
+                key={key}
+                dataKey={key}
+                type={type}
+                stroke={index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)"}
+                strokeWidth={2}
+                dot={label !== "none" ? { fill: index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)" } : false}
+                activeDot={label !== "none" ? { r: 6 } : false}
+              >
+                {label === "label" && <LabelList position="top" offset={12} formatter={(value: any) => value}  />}
+              </Line>
+            ))}
+            {legend && (
+              <ChartLegend content={<ChartLegendContent />} />
             )}
-            </Line>
-            {legend && (<ChartLegend content={<ChartLegendContent />} />)}
           </LineChart>
         </ChartContainer>
       )
@@ -212,7 +211,7 @@ function renderChart(
               tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="events" fill="var(--color-desktop)" radius={8} />
+            <Bar dataKey="rate" fill="var(--color-desktop)" radius={8} />
             {legend && (<ChartLegend content={<ChartLegendContent />} />)}
           </BarChart>
         </ChartContainer>
@@ -231,7 +230,7 @@ function renderChart(
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
             <Area
-              dataKey="events"
+              dataKey="rate"
               type={type}
               fill="var(--color-mobile)"
               fillOpacity={0.4}
@@ -260,7 +259,8 @@ export function ExampleChart({
   label = "label", 
   legend = false, 
   trend = false, 
-  calendar = false 
+  calendar = false,
+  dataset = []
   }: ExampleChartProps) {
 
     const { t } = useTranslation();
@@ -270,13 +270,45 @@ export function ExampleChart({
     to: new Date(2025, 5, 20),
   })
   
-  const { data, loading, error } = useParsedData({maxRows: 10000 });
-  const lastTimestamp = data.length ? data[data.length - 1].Timestamp : 0;
+  const { data, loading, error } = useParsedData({maxRows: 100 });
   // Memoize graphData safely, even if data is undefined yet
   const graphData = React.useMemo(() => {
-    if (!data.length) return [];
-    return eventsPerSecond(data, 10);
-  }, [lastTimestamp]);
+  if (!data || !data.length) return [];
+
+  const maxRows = 1000;
+
+  // Rate array
+  const rateArray = calcRate(data, 10).slice(0, maxRows);
+
+  // Andere kolommen per event
+  const columns = getColumnsPerEvent(data, maxRows);
+
+  const mergedData = Array.from({ length: rateArray.length }).map((_, i) => {
+    if (rateArray[i]?.time === undefined) {
+      throw new Error(`Missing 'time' for event index ${i} in rateArray`);
+    }
+
+    return {
+      event: columns.event[i],
+      time: rateArray[i].time,
+      rate: rateArray[i].rate,
+      adc: columns.adc[i],
+      sipm: columns.sipm[i],
+      deadtime: columns.deadtime[i],
+      temp: columns.temp[i],
+      press: columns.press[i],
+      accelX: columns.accelX[i],
+      accelY: columns.accelY[i],
+      accelZ: columns.accelZ[i],
+      gyroX: columns.gyroX[i],
+      gyroY: columns.gyroY[i],
+      gyroZ: columns.gyroZ[i],
+      timestamp: columns.timestamp[i],
+    };
+  });
+
+  return mergedData;
+}, [data]);
 
   return (
     <Card className="w-60 h-60 gap-4 transition">
@@ -297,7 +329,7 @@ export function ExampleChart({
       ) : error ? (
         <div>Error: {error}</div>
       ) : (
-        renderChart(chart, type, label, legend, graphData)
+        renderChart(chart, type, label, legend, graphData, dataset)
       )}
       </CardContent>
       {trend && (<CardFooter className="flex-col items-start gap-2 text-sm">
@@ -308,4 +340,4 @@ export function ExampleChart({
     )}
     </Card>
   )
-}
+  }

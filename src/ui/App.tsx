@@ -1,5 +1,5 @@
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import { Layout } from "../components/Layout.tsx";
+import { Layout } from "../components/AppLayout.tsx";
 import Home from "../pages/Home.tsx";
 import Widgets from "../pages/Widgets.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
@@ -21,7 +21,7 @@ const router = createHashRouter([
 export default function App() {
   return (
     <>
-      <Toaster position="top-center" /> {/* of 'bottom-right', etc */}
+      <Toaster position="top-center" />
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <RouterProvider router={router} />
       </ThemeProvider>
