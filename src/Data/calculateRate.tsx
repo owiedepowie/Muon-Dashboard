@@ -13,13 +13,11 @@ function lowerBoundByTimestamp(data: RawRow[], target: number) {
 }
 
 export function calcRate(data: RawRow[], windowSec: number) {
-  console.log("calcRate called", data?.length);
   if (!data || data.length === 0) return [];
 
   const lastIdx = data.length - 1;
   const latest = windowSec;
   const windowStart = 0;
-  console.log("latest", latest, "windowStart", windowStart);
   const startIdx = lowerBoundByTimestamp(data, windowStart);
 
   const countsMap = new Map<number, number>();

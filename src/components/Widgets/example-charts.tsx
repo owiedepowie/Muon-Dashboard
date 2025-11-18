@@ -1,8 +1,8 @@
 "use client"
 
 import { calcRate } from "@/Data/calculateRate"
-import { getColumnsPerEvent } from "@/Data/dataPerEvent"
-import { useParsedData, type RawRow } from "@/hooks/parseData"
+import { useColumnsPerEvent } from "@/Data/dataPerEvent"
+import { useParsedData } from "@/hooks/parseData"
 import { TrendingUp } from "lucide-react"
 import { 
   PolarAngleAxis, 
@@ -43,6 +43,7 @@ import { useTranslation } from "react-i18next";
 import { CalendarRange, CalendarTrigger } from "@/components/Widgets/Calendar";
 import type { DateRange } from "node_modules/react-day-picker/dist/esm/types/shared"
 import React from "react"
+import { Spinner } from "../ui/spinner"
 
 const chartData = [
   { month: "Bananuary", desktop: 186, mobile: 80 },
@@ -125,8 +126,11 @@ function renderChart(
   graphData?: { time: number; rate: number }[],
   dataset?: string[]
 ) {
-
+  const XAxisDatakey = dataset?.includes("rate") ? "time" : "event"
+  const keys = (dataset && dataset.length > 0 ? dataset : ["rate"]).slice(0, 3);
   switch (chart) {
+    
+
     case "pie":
       return (
         <ChartContainer
@@ -161,8 +165,6 @@ function renderChart(
       )
     case "line":
 
-      const XAxisDatakey = dataset?.includes("rate") ? "time" : "time"
-
       return (
         <ChartContainer config={chartConfig}>
           <LineChart
@@ -174,12 +176,12 @@ function renderChart(
               dataKey={XAxisDatakey}
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={10}
               tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
 
-            {dataset?.slice(0, 3).map((key, index) => (
+            {keys.map((key, index) => (
               <Line
                 key={key}
                 dataKey={key}
@@ -204,14 +206,22 @@ function renderChart(
           <BarChart data={graphData}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="time"
+              dataKey={XAxisDatakey}
               tickLine={false}
               tickMargin={10}
               axisLine={false}
               tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="rate" fill="var(--color-desktop)" radius={8} />
+            {keys.map((key, index) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                type={type}
+                fill={index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)"}
+              >
+              </Bar>
+            ))}
             {legend && (<ChartLegend content={<ChartLegendContent />} />)}
           </BarChart>
         </ChartContainer>
@@ -225,26 +235,24 @@ function renderChart(
               dataKey="time"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={10}
               tickFormatter={(v: number) => `${v}s`}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-            <Area
-              dataKey="rate"
-              type={type}
-              fill="var(--color-mobile)"
-              fillOpacity={0.4}
-              stroke="var(--color-mobile)"
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
-              type={type}
-              fill="var(--color-desktop)"
-              fillOpacity={0.4}
-              stroke="var(--color-desktop)"
-              stackId="a"
-            />
+            {keys.map((key, index) => (
+              <Area
+                key={key}
+                dataKey={key}
+                type={type}
+                stroke={index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)"}
+                fill={index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)"}
+                fillOpacity={0.4}
+                dot={label !== "none" ? { fill: index === 0 ? "var(--chart-1)" : index === 1 ? "var(--chart-2)" : "var(--chart-3)" } : false}
+                activeDot={label !== "none" ? { r: 6 } : false}
+              >
+                {label === "label" && <LabelList position="top" offset={12} formatter={(value: any) => value}  />}
+              </Area>
+            ))}
             {legend && (<ChartLegend content={<ChartLegendContent />} />)}
           </AreaChart>
         </ChartContainer>
@@ -269,47 +277,50 @@ export function ExampleChart({
     from: new Date(2025, 5, 5),
     to: new Date(2025, 5, 20),
   })
+  const { data, loading, error } = useParsedData({maxRows: 10000 });
+  const [tick, setTick] = React.useState(0);
+  const [graphData, setGraphData] = React.useState<{ time: number; rate: number }[]>([]);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   
-  const { data, loading, error } = useParsedData({maxRows: 100 });
-  // Memoize graphData safely, even if data is undefined yet
-  const graphData = React.useMemo(() => {
-  if (!data || !data.length) return [];
+  React.useEffect(() => {
+    if (!data || !data.length) return;
 
-  const maxRows = 1000;
+    // recompute columns for this tick
+    const columns = useColumnsPerEvent(data, 10, tick);
+    const rateArray = calcRate(data, tick+1);
 
-  // Rate array
-  const rateArray = calcRate(data, 10).slice(0, maxRows);
+    const rate = rateArray[tick];
 
-  // Andere kolommen per event
-  const columns = getColumnsPerEvent(data, maxRows);
-
-  const mergedData = Array.from({ length: rateArray.length }).map((_, i) => {
-    if (rateArray[i]?.time === undefined) {
-      throw new Error(`Missing 'time' for event index ${i} in rateArray`);
-    }
-
-    return {
-      event: columns.event[i],
-      time: rateArray[i].time,
-      rate: rateArray[i].rate,
-      adc: columns.adc[i],
-      sipm: columns.sipm[i],
-      deadtime: columns.deadtime[i],
-      temp: columns.temp[i],
-      press: columns.press[i],
-      accelX: columns.accelX[i],
-      accelY: columns.accelY[i],
-      accelZ: columns.accelZ[i],
-      gyroX: columns.gyroX[i],
-      gyroY: columns.gyroY[i],
-      gyroZ: columns.gyroZ[i],
-      timestamp: columns.timestamp[i],
+    const point = {
+      event: columns.event[0], // first event in this tick window
+      time: rate.time,
+      rate: rate.rate,
+      adc: columns.adc[0],
+      sipm: columns.sipm[0],
+      deadtime: columns.deadtime[0],
+      temp: columns.temp[0],
+      press: columns.press[0],
+      accelX: columns.accelX[0],
+      accelY: columns.accelY[0],
+      accelZ: columns.accelZ[0],
+      gyroX: columns.gyroX[0],
+      gyroY: columns.gyroY[0],
+      gyroZ: columns.gyroZ[0],
+      timestamp: columns.timestamp[0],
     };
-  });
-
-  return mergedData;
-}, [data]);
-
+    // append to graphData and keep a sliding window
+    setGraphData((prev) => {
+      const updated = [...prev, point];
+      return updated.slice(-10); // keep last 50 points
+    });
+  }, [tick, data]);
+  
   return (
     <Card className="w-60 h-60 gap-4 transition">
       <CardHeader>
@@ -325,7 +336,9 @@ export function ExampleChart({
       </CardHeader>
       <CardContent>
         {loading ? (
-        <div>Loading…</div>
+        <div className="flex justify-center items-center h-30">
+          <Spinner className="size-6"/>
+        </div>
       ) : error ? (
         <div>Error: {error}</div>
       ) : (
