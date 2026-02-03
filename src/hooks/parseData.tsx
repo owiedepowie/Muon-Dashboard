@@ -26,7 +26,7 @@ export function useParsedData(options?: { maxRows?: number }) {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch("/Data/ExampleData.txt");
+        const res = await fetch("Data/ExampleData.txt");
         if (!res.ok) throw new Error(`Failed to fetch ExampleData.txt (${res.status})`);
         const text = await res.text();
 

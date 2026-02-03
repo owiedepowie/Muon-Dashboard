@@ -1,16 +1,25 @@
-import { ExampleChart } from "@/components/Widgets/example-charts"
-import { ExampleTable } from "@/components/Widgets/example-table";
+// src/pages/Home.tsx
+import { ExampleChart } from "@/components/Widgets/example-charts";
+import { useCharts } from "@/state/ChartContext";
 
 export default function Home() {
-  return (
-  <div>
-  <h1 className="text-2xl font-bold">Home Page</h1>
-    <div className="my-4 flex flex-row gap-4">
-    <ExampleChart chart="bar" dataset={["rate"]} title="Muonen per seconde" legend={true} />
-    <ExampleChart chart="area" dataset={["adc", "sipm"]} title="Muonen per seconde" legend={true} />
-    </div>
-    <ExampleTable />
+  const { charts } = useCharts();
 
-  </div>
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {charts.map(chart => (
+        <ExampleChart
+          key={chart.id}
+          chart={chart.chart}
+          title={chart.title}
+          type={chart.type}
+          label={chart.label}
+          legend={chart.legend}
+          trend={chart.trend}
+          calendar={chart.calendar}
+          dataset={chart.dataset}
+        />
+      ))}
+    </div>
   );
-}  
+}

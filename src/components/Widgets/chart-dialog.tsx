@@ -31,7 +31,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { useTranslation } from "react-i18next"
-
+import { useCharts } from "@/state/ChartContext"
+import { useNavigate } from "react-router-dom"
+import { nanoid } from "nanoid";
+import { toast } from "sonner"
 interface ChartDialogProps {
   chart: "pie" | "radar" | "line" | "bar" | "area";
 }
@@ -100,6 +103,9 @@ const [dataset, setDataset] = useState<string[]>([])
         names: ["chart.dataset.rate", "chart.dataset.ADC", "chart.dataset.SiPM", "chart.dataset.deadtime", "chart.dataset.temperature", "chart.dataset.pressure", "chart.dataset.acceleration", "chart.dataset.gyro" ]
     }
     ]
+
+    const { addChart, removeChart } = useCharts()
+    const navigate = useNavigate()
 
     const { t } = useTranslation();
 
@@ -209,9 +215,46 @@ const [dataset, setDataset] = useState<string[]>([])
                 </div>
             </DialogHeader>
             <DialogFooter>
-                <button className="bg-fuchsia-600 text-primary font-medium p-2 text-sm rounded-md hover:bg-fuchsia-600/90 transition">
-                    <span className="flex items-center text-white"><Plus /> Add Widget</span>
-                </button>
+            <button
+                onClick={() => {
+                    if (dataset.length === 0) {
+                        toast.error("Could not add widget. Please select at least one dataset.");
+                        return;
+                    }
+                    const chartId = nanoid();
+
+                    const chartConfig = {
+                    id: chartId,
+                    chart,
+                    title: chartTitle || undefined,
+                    type: lineType,
+                    label: labelType,
+                    legend: checkboxes.legend,
+                    trend: checkboxes.trend,
+                    calendar: checkboxes.calendar,
+                    dataset,
+                    }
+
+                    addChart(chartConfig);
+
+                    toast.success(`${chartTitle} has been added to your dashboard!`, {
+                        description: `${chart} chart, ${lineType}, ${labelType}, ${dataset}`,
+                        action: {
+                            label: "Undo",
+                            onClick: () => {
+                                removeChart(chartId);
+                                toast.success("Widget removed.")
+                            }
+                        }
+                    });
+                    navigate("/");
+                }}
+                className="bg-fuchsia-600 text-primary font-medium p-2 text-sm rounded-md hover:bg-fuchsia-600/90 transition"
+            >
+                <span className="flex items-center text-white">
+                <Plus /> Add Widget
+                </span>
+            </button>
             </DialogFooter>
         </DialogContent>
     )

@@ -2,6 +2,7 @@
   "name": "muondashboard",
   "private": true,
   "version": "0.0.0",
+  "author": "Owen",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -60,7 +61,6 @@
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.4.21",
     "cross-env": "^7.0.3",
